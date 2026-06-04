@@ -1,0 +1,243 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-2: #334155;
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --radius: 12px;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+.app {
+  width: 100%;
+  max-width: 520px;
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  height: fit-content;
+}
+
+.app__header {
+  margin-bottom: 24px;
+}
+
+.app__header h1 {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.app__date {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-top: 4px;
+  text-transform: capitalize;
+}
+
+/* Form */
+.todo-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.todo-form__input {
+  flex: 1;
+  padding: 14px 16px;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.todo-form__input::placeholder {
+  color: var(--text-muted);
+}
+
+.todo-form__input:focus {
+  border-color: var(--primary);
+}
+
+.todo-form__btn {
+  width: 52px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: #fff;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.todo-form__btn:hover {
+  background: var(--primary-hover);
+}
+
+.todo-form__btn:active {
+  transform: scale(0.95);
+}
+
+/* Filters */
+.filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.filters__btn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filters__btn:hover {
+  color: var(--text);
+}
+
+.filters__btn.is-active {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* List */
+.todo-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.todo-item__checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  border: 2px solid var(--text-muted);
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.todo-item__checkbox:checked {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.todo-item__checkbox:checked::after {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.todo-item__text {
+  flex: 1;
+  font-size: 15px;
+  word-break: break-word;
+  cursor: pointer;
+}
+
+.todo-item.is-completed .todo-item__text {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.todo-item__delete {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.todo-item__delete:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+}
+
+/* Empty state */
+.empty {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--text-muted);
+}
+
+/* Footer */
+.app__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--surface-2);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.link-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.link-btn:hover {
+  color: var(--danger);
+}
