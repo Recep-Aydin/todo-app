@@ -53,6 +53,136 @@ body {
   text-transform: capitalize;
 }
 
+/* Auth */
+.auth {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+}
+
+.auth__card {
+  width: 100%;
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 36px 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.auth__title {
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.auth__subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 6px 0 24px;
+}
+
+.auth__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth__input {
+  padding: 14px 16px;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.auth__input::placeholder {
+  color: var(--text-muted);
+}
+
+.auth__input:focus {
+  border-color: var(--primary);
+}
+
+.auth__btn {
+  margin-top: 4px;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.auth__btn:hover {
+  background: var(--primary-hover);
+}
+
+.auth__btn:active {
+  transform: scale(0.98);
+}
+
+.auth__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth__error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin: 0;
+}
+
+.auth__switch {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.link-btn--accent {
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.link-btn--accent:hover {
+  color: var(--primary-hover);
+}
+
+/* Header user row */
+.app__header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.app__user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.app__email {
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Form */
 .todo-form {
   display: flex;

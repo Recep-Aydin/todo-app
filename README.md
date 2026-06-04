@@ -3,6 +3,8 @@
 HTML, CSS ve Vanilla JavaScript ile yapılmış, **Supabase** (PostgreSQL) veritabanına REST API üzerinden bağlanan basit bir todo uygulaması.
 
 ## Özellikler
+- 🔐 E-posta + şifre ile kayıt ve giriş (e-posta onayı gerekmez)
+- 👤 Her kullanıcı yalnızca kendi görevlerini görür (RLS ile)
 - ➕ Görev ekleme
 - ✅ Tamamlandı / aktif işaretleme
 - 🗑️ Silme ve tamamlananları temizleme
