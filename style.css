@@ -4,6 +4,12 @@
   box-sizing: border-box;
 }
 
+/* hidden özniteliği her zaman gizlemeyi garantiler.
+   (.auth { display:flex } gibi kurallar [hidden]'ı ezdiği için gerekli) */
+[hidden] {
+  display: none !important;
+}
+
 :root {
   --bg: #0f172a;
   --surface: #1e293b;
