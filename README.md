@@ -10,6 +10,7 @@ HTML, CSS ve Vanilla JavaScript ile yapılmış, **Supabase** (PostgreSQL) verit
 - ↕️ Sürükle-bırak ile öncelik sıralaması (sıra kalıcı kaydedilir)
 - 🔍 Görevlerde anlık arama
 - 🌗 Açık / koyu tema (tercih kaydedilir)
+- 🛠️ **Mühendis Köşesi** yan paneli: günün mühendislik terimi + tıklayınca eklenen hazır mini görevler
 - ➕ Görev ekleme
 - ✅ Tamamlandı / aktif işaretleme
 - 🗑️ Silme ve tamamlananları temizleme

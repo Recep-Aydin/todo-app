@@ -36,6 +36,10 @@
   const dueInput = document.getElementById("todoDue");
   const searchInput = document.getElementById("searchInput");
   const themeToggle = document.getElementById("themeToggle");
+  const termNameEl = document.getElementById("termName");
+  const termDefEl = document.getElementById("termDef");
+  const suggestionsEl = document.getElementById("suggestions");
+  const suggestRefresh = document.getElementById("suggestRefresh");
 
   // --- State ---
   let session = loadSession(); // { access_token, refresh_token, user }
@@ -486,6 +490,7 @@
       day: "numeric",
       month: "long",
     });
+    renderPanel(); // mühendis köşesini doldur
     try {
       await fetchTodos();
     } catch (err) {
@@ -591,6 +596,118 @@
         : "light";
     localStorage.setItem("theme", next);
     applyTheme(next);
+  });
+
+  // =========================================================
+  //  MÜHENDİS KÖŞESİ (YAN PANEL)
+  // =========================================================
+  const TERMS = [
+    { name: "Tork", def: "Bir cismi eksen etrafında döndüren kuvvet etkisi (N·m)." },
+    { name: "Gerilme (Stress)", def: "Birim alana düşen iç kuvvet; σ = F/A." },
+    { name: "Şekil Değiştirme (Strain)", def: "Birim uzunluktaki boyut değişimi; ε = ΔL/L." },
+    { name: "Young Modülü", def: "Elastik bölgede gerilmenin şekil değiştirmeye oranı." },
+    { name: "Reynolds Sayısı", def: "Akışın laminer mi türbülanslı mı olduğunu belirleyen boyutsuz sayı." },
+    { name: "Entropi", def: "Bir sistemin düzensizlik ve erişilemez enerji ölçüsü." },
+    { name: "Empedans", def: "Alternatif akım devrelerinde toplam direnç (Z)." },
+    { name: "Ohm Yasası", def: "V = I·R; gerilim, akım ve direnç arasındaki ilişki." },
+    { name: "Kirchhoff Yasaları", def: "Devrelerde akım (KCL) ve gerilim (KVL) korunum kuralları." },
+    { name: "Fourier Dönüşümü", def: "Bir sinyali frekans bileşenlerine ayıran dönüşüm." },
+    { name: "Laplace Dönüşümü", def: "Diferansiyel denklemleri cebirsel hale getiren dönüşüm." },
+    { name: "Gradyan (∇f)", def: "Bir skaler alanın en hızlı artış yönünü veren vektör." },
+    { name: "Diverjans", def: "Bir vektör alanının bir noktadan ne kadar 'yayıldığının' ölçüsü." },
+    { name: "Rotasyonel (Curl)", def: "Bir vektör alanının dönme eğiliminin ölçüsü." },
+    { name: "Verimlilik (η)", def: "Faydalı çıkış gücünün toplam giriş gücüne oranı." },
+    { name: "Mukavemet", def: "Bir malzemenin yük altında kırılmadan dayanma kapasitesi." },
+    { name: "Atalet Momenti", def: "Bir cismin dönmeye karşı direncini belirleyen büyüklük." },
+    { name: "Bernoulli Denklemi", def: "Akışkanlarda basınç, hız ve yükseklik arası enerji korunumu." },
+    { name: "PID Kontrol", def: "Hata üzerinden oransal-integral-türevsel geri besleme kontrolü." },
+    { name: "Boyut Analizi", def: "Denklemlerin birim tutarlılığını kontrol etme yöntemi." },
+    { name: "Süperpozisyon", def: "Doğrusal sistemlerde etkilerin ayrı ayrı toplanabilmesi." },
+    { name: "Nyquist Kriteri", def: "Örnekleme frekansı, sinyal frekansının en az 2 katı olmalı." },
+    { name: "Termal İletkenlik (k)", def: "Bir malzemenin ısıyı iletme yeteneğinin ölçüsü." },
+    { name: "Kuvvet Çifti (Couple)", def: "Net kuvveti sıfır ama tork üreten, zıt yönlü kuvvet ikilisi." },
+    { name: "Gerinim Enerjisi", def: "Şekil değiştiren bir cisimde depolanan elastik enerji." },
+  ];
+
+  const MINI_TASKS = [
+    "30 dakika kesintisiz çalış (Pomodoro)",
+    "Bir ders konusunu özetle (1 sayfa)",
+    "5 türev/integral sorusu çöz",
+    "Bir kavramı Feynman tekniğiyle anlat",
+    "Python/MATLAB'da küçük bir grafik çiz",
+    "Eski bir sınav sorusunu çöz",
+    "Bir akademik makalenin özetini oku",
+    "Formül kâğıdını güncelle",
+    "10 soruluk mini quiz çöz",
+    "Lab raporundan 1 paragraf yaz",
+    "20 dakikalık bir ders videosu izle",
+    "Birim dönüşümü alıştırması yap",
+    "Devre / serbest cisim diyagramı çiz",
+    "Teslim tarihlerini ve programı kontrol et",
+    "Bir algoritma / kod problemi çöz",
+    "Bir konuyu bir arkadaşına anlat",
+  ];
+
+  function dayOfYear() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    return Math.floor((now - start) / 86400000);
+  }
+
+  let suggestSeed = dayOfYear();
+
+  function renderTerm() {
+    const t = TERMS[dayOfYear() % TERMS.length];
+    termNameEl.textContent = t.name;
+    termDefEl.textContent = t.def;
+  }
+
+  function renderSuggestions() {
+    // Tohumdan başlayarak 4 farklı öneri seç
+    const count = 4;
+    const picks = [];
+    for (let i = 0; i < count; i++) {
+      picks.push(MINI_TASKS[(suggestSeed + i * 7) % MINI_TASKS.length]);
+    }
+    suggestionsEl.innerHTML = "";
+    picks.forEach((text) => {
+      const li = document.createElement("li");
+      li.className = "suggestion";
+      li.title = "Listeye ekle";
+
+      const label = document.createElement("span");
+      label.className = "suggestion__text";
+      label.textContent = text;
+
+      const add = document.createElement("span");
+      add.className = "suggestion__add";
+      add.textContent = "＋";
+
+      li.append(label, add);
+      li.addEventListener("click", async () => {
+        if (li.classList.contains("is-added")) return;
+        li.classList.add("is-added");
+        add.textContent = "✓";
+        try {
+          await addTodo(text, null);
+        } catch (err) {
+          li.classList.remove("is-added");
+          add.textContent = "＋";
+          alert(err.message);
+        }
+      });
+      suggestionsEl.appendChild(li);
+    });
+  }
+
+  function renderPanel() {
+    renderTerm();
+    renderSuggestions();
+  }
+
+  suggestRefresh.addEventListener("click", () => {
+    suggestSeed = (suggestSeed + 4) % MINI_TASKS.length; // sonraki grup
+    renderSuggestions();
   });
 
   function translateError(msg) {
