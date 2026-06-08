@@ -7,6 +7,7 @@ HTML, CSS ve Vanilla JavaScript ile yapılmış, **Supabase** (PostgreSQL) verit
 - 👤 Her kullanıcı yalnızca kendi görevlerini görür (RLS ile)
 - ✏️ Görev düzenleme (metne çift tıkla veya kalem ikonu)
 - 📅 Son tarih (deadline) — geçmiş tarihler kırmızı uyarı
+- ↕️ Sürükle-bırak ile öncelik sıralaması (sıra kalıcı kaydedilir)
 - 🔍 Görevlerde anlık arama
 - 🌗 Açık / koyu tema (tercih kaydedilir)
 - ➕ Görev ekleme

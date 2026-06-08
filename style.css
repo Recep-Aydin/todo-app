@@ -533,6 +533,38 @@ body {
   color: var(--primary);
 }
 
+/* Sürükle-bırak */
+.todo-item__handle {
+  color: var(--text-muted);
+  font-size: 14px;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+  transition: color 0.2s;
+}
+
+.todo-item__handle:hover {
+  color: var(--text);
+}
+
+.todo-item {
+  transition: background 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+
+.todo-item.is-dragging {
+  opacity: 0.4;
+  box-shadow: var(--shadow);
+}
+
+.todo-item.drop-above {
+  box-shadow: inset 0 3px 0 var(--primary);
+}
+
+.todo-item.drop-below {
+  box-shadow: inset 0 -3px 0 var(--primary);
+}
+
 @media (max-width: 480px) {
   .app { padding: 22px 18px; }
 }

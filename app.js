@@ -44,6 +44,7 @@
   let mode = "login"; // login | signup
   let search = "";
   let editingId = null;
+  let draggingId = null;
 
   // =========================================================
   //  OTURUM (SESSION) YÖNETİMİ
@@ -159,13 +160,19 @@
   }
 
   async function fetchTodos() {
-    todos = await api("?select=*&order=inserted_at.desc");
+    // position artan: küçük = üstte; eşitlik/boşlukta en yeni üstte
+    todos = await api("?select=*&order=position.asc.nullslast,inserted_at.desc");
     render();
   }
 
   async function addTodo(text, dueDate) {
     const payload = { text }; // user_id DB'de auth.uid() ile otomatik
     if (dueDate) payload.due_date = dueDate;
+    // Yeni görev en üste: mevcut en küçük pozisyonun bir altı
+    const minPos = todos.length
+      ? Math.min(...todos.map((t) => t.position ?? 0))
+      : 0;
+    payload.position = minPos - 1;
     const [created] = await api("", {
       method: "POST",
       headers: { Prefer: "return=representation" },
@@ -173,6 +180,43 @@
     });
     todos.unshift(created);
     render();
+  }
+
+  // Sürükle-bırak ile yeni sıraya göre pozisyonu kalıcılaştır
+  async function reorderTodo(draggedId, targetId, after) {
+    if (draggedId == null || draggedId === targetId) return;
+    const fromIdx = todos.findIndex((t) => t.id === draggedId);
+    if (fromIdx < 0) return;
+    const moved = todos[fromIdx];
+    todos.splice(fromIdx, 1);
+    let targetIdx = todos.findIndex((t) => t.id === targetId);
+    if (targetIdx < 0) {
+      todos.splice(fromIdx, 0, moved); // hedef bulunamadı, geri koy
+      return;
+    }
+    if (after) targetIdx += 1;
+    todos.splice(targetIdx, 0, moved);
+
+    // Komşulara göre kesirli pozisyon hesapla (tek satır güncellemesi yeter)
+    const prev = todos[targetIdx - 1];
+    const next = todos[targetIdx + 1];
+    let newPos;
+    if (!prev) newPos = (next?.position ?? 0) - 1;
+    else if (!next) newPos = (prev.position ?? 0) + 1;
+    else newPos = ((prev.position ?? 0) + (next.position ?? 0)) / 2;
+    moved.position = newPos;
+    render();
+
+    try {
+      await api(`?id=eq.${moved.id}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({ position: newPos }),
+      });
+    } catch (err) {
+      alert(err.message);
+      fetchTodos(); // hata: sunucudan tazele
+    }
   }
 
   async function editTodo(id, newText) {
@@ -270,6 +314,8 @@
 
   function render() {
     const visible = getVisible();
+    // Sürükle-bırak yalnızca tam listede anlamlı (filtre yok + arama yok)
+    const dragEnabled = filter === "all" && !search;
     list.innerHTML = "";
 
     visible.forEach((todo) => {
@@ -352,7 +398,55 @@
       del.setAttribute("aria-label", "Sil");
       del.addEventListener("click", () => deleteTodo(todo.id));
 
-      li.append(checkbox, content, editBtn, del);
+      // Sürükleme tutamacı + sürükle-bırak olayları
+      const handle = document.createElement("span");
+      handle.className = "todo-item__handle";
+      handle.innerHTML = "&#x2630;"; // ☰
+      handle.title = dragEnabled
+        ? "Sürükleyerek sırala"
+        : "Sıralama için filtreyi 'Tümü' yapın ve aramayı temizleyin";
+
+      if (dragEnabled) {
+        li.draggable = true;
+        handle.style.cursor = "grab";
+
+        li.addEventListener("dragstart", (e) => {
+          draggingId = todo.id;
+          li.classList.add("is-dragging");
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", todo.id); // Firefox için gerekli
+        });
+        li.addEventListener("dragend", () => {
+          draggingId = null;
+          list.querySelectorAll(".todo-item").forEach((el) =>
+            el.classList.remove("is-dragging", "drop-above", "drop-below")
+          );
+        });
+        li.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          if (draggingId == null || draggingId === todo.id) return;
+          const rect = li.getBoundingClientRect();
+          const after = e.clientY - rect.top > rect.height / 2;
+          li.classList.toggle("drop-below", after);
+          li.classList.toggle("drop-above", !after);
+        });
+        li.addEventListener("dragleave", () => {
+          li.classList.remove("drop-above", "drop-below");
+        });
+        li.addEventListener("drop", (e) => {
+          e.preventDefault();
+          const rect = li.getBoundingClientRect();
+          const after = e.clientY - rect.top > rect.height / 2;
+          const dragged = draggingId;
+          li.classList.remove("drop-above", "drop-below");
+          reorderTodo(dragged, todo.id, after);
+        });
+      } else {
+        handle.style.opacity = "0.25";
+        handle.style.cursor = "not-allowed";
+      }
+
+      li.append(handle, checkbox, content, editBtn, del);
       list.appendChild(li);
     });
 
