@@ -8,6 +8,9 @@ HTML, CSS ve Vanilla JavaScript ile yapılmış, **Supabase** (PostgreSQL) verit
 - 🚦 Öncelik etiketleri (Yüksek/Orta/Düşük — kırmızı/sarı/yeşil, noktaya tıkla değiştir)
 - 📊 Günlük ilerleme çubuğu (tamamlanan % — %100'de yeşil)
 - 🎉 Görev tamamlanınca konfeti animasyonu
+- 🎮 XP & seviye sistemi (görev başına +10 XP, geri alınca −10)
+- 🎖️ Rozet vitrini (İlk Adım, Üretken, Seri, Yüz Puan, Usta, Efsane…)
+- ⚔️ Günlük Kapışma: tüm kullanıcıların yarıştığı canlı liderlik tablosu (kim çok görev yaparsa öne geçer)
 - ✏️ Görev düzenleme (metne çift tıkla veya kalem ikonu)
 - 📅 Son tarih (deadline) — geçmiş tarihler kırmızı uyarı
 - ↕️ Sürükle-bırak ile öncelik sıralaması (sıra kalıcı kaydedilir)

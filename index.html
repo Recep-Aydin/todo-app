@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yapılacaklar Listesi</title>
-  <link rel="stylesheet" href="style.css?v=12">
+  <link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
   <!-- Konfeti katmanı -->
@@ -76,6 +76,39 @@
         <span class="agenda__status" id="agendaStatus"></span>
         <button class="icon-btn" id="agendaToday" title="Bugüne dön" aria-label="Bugüne dön">📅</button>
       </div>
+
+      <!-- Seviye & Rozet Vitrini -->
+      <section class="panel__section gp-section">
+        <h3 class="panel__title">🎖️ Seviye & Rozetler</h3>
+
+        <div class="level">
+          <div class="level__top">
+            <span class="level__badge" id="levelBadge">Lv 1</span>
+            <span class="level__xp" id="levelXp">0 XP</span>
+          </div>
+          <div class="level__track">
+            <div class="level__bar" id="levelBar"></div>
+          </div>
+          <span class="level__next" id="levelNext">Sonraki seviyeye 100 XP</span>
+        </div>
+
+        <div class="badges" id="badgeGrid"></div>
+      </section>
+
+      <!-- Günlük Kapışma (liderlik tablosu) -->
+      <section class="panel__section gp-section">
+        <div class="panel__head">
+          <h3 class="panel__title">⚔️ Günlük Kapışma</h3>
+          <button class="icon-btn" id="lbRefresh" title="Yenile" aria-label="Yenile">🔄</button>
+        </div>
+        <p class="lb__sub">Bugün en çok görev yapan öne geçer 🏁</p>
+        <ol class="lb" id="leaderboard"></ol>
+        <div class="lb__me" id="lbMe" hidden></div>
+        <div class="lb__name">
+          <label for="nameInput">Takma adın:</label>
+          <input type="text" id="nameInput" class="lb__name-input" maxlength="20" placeholder="Mühendis">
+        </div>
+      </section>
     </aside>
 
     <!-- Ana todo kartı -->
@@ -174,6 +207,6 @@
     </aside>
   </div>
 
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>

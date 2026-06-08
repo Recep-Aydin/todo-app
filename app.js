@@ -49,6 +49,15 @@
   const agendaPrev = document.getElementById("agendaPrev");
   const agendaNext = document.getElementById("agendaNext");
   const agendaToday = document.getElementById("agendaToday");
+  const levelBadge = document.getElementById("levelBadge");
+  const levelXp = document.getElementById("levelXp");
+  const levelBar = document.getElementById("levelBar");
+  const levelNext = document.getElementById("levelNext");
+  const badgeGrid = document.getElementById("badgeGrid");
+  const leaderboardEl = document.getElementById("leaderboard");
+  const lbMe = document.getElementById("lbMe");
+  const lbRefresh = document.getElementById("lbRefresh");
+  const nameInput = document.getElementById("nameInput");
   const priorityInput = document.getElementById("todoPriority");
   const progressEl = document.getElementById("progress");
   const progressBar = document.getElementById("progressBar");
@@ -296,6 +305,7 @@
       todo.completed = false; // aktif kalır, ileri tarihe taşınır
       render();
       fireConfetti();
+      awardXp(XP_PER_TASK, 1); // tekrarlı görev tamamlama da puan kazandırır
       try {
         await api(`?id=eq.${id}`, {
           method: "PATCH",
@@ -312,7 +322,12 @@
 
     todo.completed = next;
     render();
-    if (next) fireConfetti(); // tamamlandığında 🎉
+    if (next) {
+      fireConfetti(); // tamamlandığında 🎉
+      awardXp(XP_PER_TASK, 1);
+    } else {
+      awardXp(-XP_PER_TASK, -1); // geri alınca puan düşer (suistimali önler)
+    }
     try {
       await api(`?id=eq.${id}`, {
         method: "PATCH",
@@ -884,6 +899,7 @@
     renderSuggestions();
     fetchScienceNews();
     loadAgenda(todayStr());
+    initGame();
   }
 
   suggestRefresh.addEventListener("click", () => {
@@ -1093,6 +1109,283 @@
     clearTimeout(agendaSaveTimer);
     saveAgenda();
     loadAgenda(todayStr());
+  });
+
+  // =========================================================
+  //  OYUNLAŞTIRMA: XP, SEVİYE, ROZET, GÜNLÜK KAPIŞMA
+  // =========================================================
+  const REST_BASE = `${SUPABASE_URL}/rest/v1`;
+  const XP_PER_TASK = 10;
+
+  const BADGES = [
+    { id: "ilk", icon: "🌱", name: "İlk Adım", desc: "İlk görevini tamamla", test: (s) => s.totalXp >= 10 },
+    { id: "uretken", icon: "⚡", name: "Üretken", desc: "Bir günde 5 görev", test: (s) => s.tasksToday >= 5 },
+    { id: "hizli", icon: "🚀", name: "Hız Kesmiyor", desc: "Bir günde 10 görev", test: (s) => s.tasksToday >= 10 },
+    { id: "seri3", icon: "🔥", name: "Seri x3", desc: "3 gün üst üste aktif", test: (s) => s.streak >= 3 },
+    { id: "seri7", icon: "💥", name: "Alev Aldı", desc: "7 gün üst üste aktif", test: (s) => s.streak >= 7 },
+    { id: "yuz", icon: "💯", name: "Yüz Puan", desc: "100 XP topla", test: (s) => s.totalXp >= 100 },
+    { id: "usta", icon: "🏆", name: "Usta", desc: "500 XP topla", test: (s) => s.totalXp >= 500 },
+    { id: "efsane", icon: "👑", name: "Efsane", desc: "1000 XP topla", test: (s) => s.totalXp >= 1000 },
+  ];
+
+  let gpProfile = { total_xp: 0, badges: [] };
+  let gpDailyXp = 0;
+  let gpDailyTasks = 0;
+  let gpStreak = 0;
+  let lbTimer = null;
+
+  function utcToday() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  // /rest/v1 tabanlı kimlikli istek (tek seferlik 401 yenileme)
+  async function gameApi(path, options = {}, retry = true) {
+    const res = await fetch(`${REST_BASE}${path}`, {
+      ...options,
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${session?.access_token}`,
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+    });
+    if (res.status === 401 && retry) {
+      try {
+        await refreshSession();
+        return gameApi(path, options, false);
+      } catch {
+        saveSession(null);
+        showAuth();
+        throw new Error("Oturum süresi doldu.");
+      }
+    }
+    if (!res.ok) {
+      const t = await res.text();
+      throw new Error(`Supabase ${res.status}: ${t}`);
+    }
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
+  }
+
+  function computeStreak(rows) {
+    const set = new Set(rows.filter((r) => r.tasks > 0).map((r) => r.day));
+    const ds = (dt) => dt.toISOString().slice(0, 10);
+    let streak = 0;
+    const cur = new Date();
+    if (!set.has(ds(cur))) cur.setUTCDate(cur.getUTCDate() - 1);
+    while (set.has(ds(cur))) {
+      streak++;
+      cur.setUTCDate(cur.getUTCDate() - 1);
+    }
+    return streak;
+  }
+
+  async function ensureProfile() {
+    const def =
+      ((session?.user?.email || "").split("@")[0] || "Mühendis").slice(0, 20);
+    await gameApi("/profiles?on_conflict=user_id", {
+      method: "POST",
+      headers: { Prefer: "resolution=ignore-duplicates,return=minimal" },
+      body: JSON.stringify({ display_name: def }),
+    });
+  }
+
+  async function loadProfile() {
+    const rows = await gameApi(
+      `/profiles?user_id=eq.${session.user.id}&select=display_name,total_xp,badges`
+    );
+    const p = rows && rows[0];
+    gpProfile.total_xp = p ? p.total_xp : 0;
+    gpProfile.badges = p && Array.isArray(p.badges) ? p.badges : [];
+    if (p && p.display_name && document.activeElement !== nameInput)
+      nameInput.value = p.display_name;
+  }
+
+  async function loadDailyMe() {
+    const rows = await gameApi(
+      `/daily_scores?user_id=eq.${session.user.id}&day=eq.${utcToday()}&select=xp,tasks`
+    );
+    gpDailyXp = rows && rows[0] ? rows[0].xp : 0;
+    gpDailyTasks = rows && rows[0] ? rows[0].tasks : 0;
+  }
+
+  async function loadStreak() {
+    const rows = await gameApi(
+      `/daily_scores?user_id=eq.${session.user.id}&select=day,tasks&order=day.desc&limit=90`
+    );
+    gpStreak = computeStreak(rows || []);
+  }
+
+  async function loadLeaderboard() {
+    try {
+      const rows = await gameApi(
+        `/daily_scores?select=user_id,xp,tasks,profiles(display_name)&day=eq.${utcToday()}&order=xp.desc,tasks.desc&limit=15`
+      );
+      renderLeaderboard(rows || []);
+    } catch {
+      leaderboardEl.innerHTML =
+        '<li class="lb__state">Tablo yüklenemedi</li>';
+    }
+    renderMe();
+  }
+
+  function renderLeaderboard(rows) {
+    leaderboardEl.innerHTML = "";
+    if (rows.length === 0) {
+      leaderboardEl.innerHTML =
+        '<li class="lb__state">Bugün ilk görevi sen tamamla! 🏁</li>';
+      return;
+    }
+    rows.forEach((r, i) => {
+      const li = document.createElement("li");
+      li.className = "lb__row" + (r.user_id === session.user.id ? " is-me" : "");
+      const rank = document.createElement("span");
+      rank.className = "lb__rank";
+      rank.textContent = i + 1;
+      const name = document.createElement("span");
+      name.className = "lb__name-cell";
+      // başka kullanıcıların adı güvensiz → textContent
+      name.textContent =
+        (r.profiles && r.profiles.display_name) || "Mühendis";
+      const score = document.createElement("span");
+      score.className = "lb__score";
+      score.textContent = `${r.tasks} görev`;
+      li.append(rank, name, score);
+      leaderboardEl.appendChild(li);
+    });
+  }
+
+  function renderMe() {
+    lbMe.hidden = false;
+    lbMe.innerHTML = `Bugünkü skorun: <b>${gpDailyTasks} görev · ${gpDailyXp} XP</b>`;
+  }
+
+  function renderLevel() {
+    const xp = gpProfile.total_xp;
+    const level = Math.floor(xp / 100) + 1;
+    const inLv = xp % 100;
+    levelBadge.textContent = "Lv " + level;
+    levelXp.textContent = xp + " XP";
+    levelBar.style.width = inLv + "%";
+    levelNext.textContent = `Sonraki seviyeye ${100 - inLv} XP`;
+  }
+
+  function renderBadges() {
+    const have = new Set(gpProfile.badges);
+    badgeGrid.innerHTML = "";
+    BADGES.forEach((b) => {
+      const d = document.createElement("div");
+      d.className = "badge " + (have.has(b.id) ? "is-earned" : "is-locked");
+      d.textContent = b.icon;
+      d.dataset.tip = `${b.name} · ${b.desc}`;
+      badgeGrid.appendChild(d);
+    });
+  }
+
+  function evaluateBadges(notify) {
+    const stats = {
+      totalXp: gpProfile.total_xp,
+      tasksToday: gpDailyTasks,
+      streak: gpStreak,
+    };
+    const earned = BADGES.filter((b) => b.test(stats)).map((b) => b.id);
+    const have = new Set(gpProfile.badges);
+    const newly = earned.filter((id) => !have.has(id));
+    if (newly.length) {
+      gpProfile.badges = Array.from(new Set([...gpProfile.badges, ...earned]));
+      gameApi(`/profiles?user_id=eq.${session.user.id}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({ badges: gpProfile.badges }),
+      }).catch(() => {});
+      if (notify) {
+        const b = BADGES.find((x) => x.id === newly[0]);
+        if (b) badgeToast(b);
+      }
+    }
+    renderBadges();
+  }
+
+  function awardXp(dxp, dtasks) {
+    gpProfile.total_xp = Math.max(0, gpProfile.total_xp + dxp);
+    gpDailyXp = Math.max(0, gpDailyXp + dxp);
+    gpDailyTasks = Math.max(0, gpDailyTasks + dtasks);
+    renderLevel();
+    renderMe();
+    if (dxp > 0) xpPop((dxp > 0 ? "+" : "") + dxp + " XP");
+    evaluateBadges(true);
+    gameApi("/rpc/award_xp", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ delta_xp: dxp, delta_tasks: dtasks }),
+    })
+      .then(() => {
+        clearTimeout(lbTimer);
+        lbTimer = setTimeout(loadLeaderboard, 1200);
+      })
+      .catch(() => {});
+  }
+
+  function xpPop(text) {
+    const el = document.createElement("div");
+    el.className = "xp-pop";
+    el.textContent = text;
+    el.style.left = "50%";
+    el.style.top = "30%";
+    el.style.marginLeft = "-26px";
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+  }
+
+  function badgeToast(b) {
+    const t = document.createElement("div");
+    t.className = "badge-toast";
+    const icon = document.createElement("span");
+    icon.className = "badge-toast__icon";
+    icon.textContent = b.icon;
+    const box = document.createElement("div");
+    const title = document.createElement("div");
+    title.className = "badge-toast__title";
+    title.textContent = "Rozet kazandın!";
+    const desc = document.createElement("div");
+    desc.className = "badge-toast__desc";
+    desc.textContent = `${b.name} — ${b.desc}`;
+    box.append(title, desc);
+    t.append(icon, box);
+    document.body.appendChild(t);
+    requestAnimationFrame(() => t.classList.add("show"));
+    setTimeout(() => {
+      t.classList.remove("show");
+      setTimeout(() => t.remove(), 400);
+    }, 3500);
+  }
+
+  async function initGame() {
+    try {
+      await ensureProfile();
+      await Promise.all([loadProfile(), loadDailyMe(), loadStreak()]);
+      renderLevel();
+      evaluateBadges(false); // ilk yüklemede bildirim yok
+      await loadLeaderboard();
+    } catch (err) {
+      leaderboardEl.innerHTML = '<li class="lb__state">Yüklenemedi</li>';
+    }
+  }
+
+  lbRefresh.addEventListener("click", loadLeaderboard);
+  nameInput.addEventListener("change", async () => {
+    const v = nameInput.value.trim().slice(0, 20);
+    if (!v) return;
+    try {
+      await gameApi(`/profiles?user_id=eq.${session.user.id}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({ display_name: v }),
+      });
+      loadLeaderboard();
+    } catch (err) {
+      alert(err.message);
+    }
   });
 
   function translateError(msg) {
