@@ -42,6 +42,13 @@
   const suggestRefresh = document.getElementById("suggestRefresh");
   const newsListEl = document.getElementById("newsList");
   const newsRefresh = document.getElementById("newsRefresh");
+  const agendaText = document.getElementById("agendaText");
+  const agendaDayEl = document.getElementById("agendaDay");
+  const agendaBadge = document.getElementById("agendaBadge");
+  const agendaStatus = document.getElementById("agendaStatus");
+  const agendaPrev = document.getElementById("agendaPrev");
+  const agendaNext = document.getElementById("agendaNext");
+  const agendaToday = document.getElementById("agendaToday");
   const priorityInput = document.getElementById("todoPriority");
   const progressEl = document.getElementById("progress");
   const progressBar = document.getElementById("progressBar");
@@ -782,6 +789,7 @@
     renderTerm();
     renderSuggestions();
     fetchScienceNews();
+    loadAgenda(todayStr());
   }
 
   suggestRefresh.addEventListener("click", () => {
@@ -856,6 +864,142 @@
   }
 
   newsRefresh.addEventListener("click", fetchScienceNews);
+
+  // =========================================================
+  //  GÜNLÜK AJANDA (SOL PANEL)
+  // =========================================================
+  const AGENDAS = `${SUPABASE_URL}/rest/v1/agendas`;
+  let agendaDate = todayStr();
+  let agendaSaveTimer = null;
+  let agendaCurrentContent = "";
+
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+
+  function shiftDate(str, deltaDays) {
+    const [y, m, d] = str.split("-").map(Number);
+    const dt = new Date(y, m - 1, d + deltaDays);
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+  }
+
+  function formatAgendaDate(str) {
+    const [y, m, d] = str.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("tr-TR", {
+      day: "numeric",
+      month: "long",
+      weekday: "long",
+    });
+  }
+
+  // agendas tablosu için kimlikli istek (tek seferlik 401 yenileme)
+  async function agendaApi(path, options = {}, retry = true) {
+    const res = await fetch(`${AGENDAS}${path}`, {
+      ...options,
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${session?.access_token}`,
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+    });
+    if (res.status === 401 && retry) {
+      try {
+        await refreshSession();
+        return agendaApi(path, options, false);
+      } catch {
+        saveSession(null);
+        showAuth();
+        throw new Error("Oturum süresi doldu, tekrar giriş yapın.");
+      }
+    }
+    if (!res.ok) {
+      const t = await res.text();
+      throw new Error(`Supabase ${res.status}: ${t}`);
+    }
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
+  }
+
+  function setAgendaStatus(msg, saved) {
+    agendaStatus.textContent = msg;
+    agendaStatus.classList.toggle("is-saved", !!saved);
+  }
+
+  async function loadAgenda(dateStr) {
+    agendaDate = dateStr;
+    const isToday = dateStr === todayStr();
+    agendaDayEl.textContent = formatAgendaDate(dateStr);
+    agendaBadge.hidden = !isToday;
+    agendaNext.disabled = isToday; // bugünden ileri gidilemez
+    agendaNext.style.opacity = isToday ? "0.3" : "";
+    agendaText.disabled = true;
+    setAgendaStatus("Yükleniyor…", false);
+    try {
+      const rows = await agendaApi(
+        `?day=eq.${dateStr}&select=content`
+      );
+      agendaCurrentContent = rows && rows[0] ? rows[0].content : "";
+      agendaText.value = agendaCurrentContent;
+      setAgendaStatus("", false);
+    } catch (err) {
+      setAgendaStatus("Yüklenemedi", false);
+    } finally {
+      agendaText.disabled = false;
+    }
+  }
+
+  async function saveAgenda() {
+    const content = agendaText.value;
+    if (content === agendaCurrentContent) return; // değişiklik yok
+    setAgendaStatus("Kaydediliyor…", false);
+    try {
+      // upsert: (user_id, day) çakışırsa içeriği güncelle
+      await agendaApi("?on_conflict=user_id,day", {
+        method: "POST",
+        headers: {
+          Prefer: "resolution=merge-duplicates,return=minimal",
+        },
+        body: JSON.stringify({
+          day: agendaDate,
+          content,
+          updated_at: new Date().toISOString(),
+        }),
+      });
+      agendaCurrentContent = content;
+      setAgendaStatus("Kaydedildi ✓", true);
+    } catch (err) {
+      setAgendaStatus("Kaydedilemedi", false);
+    }
+  }
+
+  agendaText.addEventListener("input", () => {
+    setAgendaStatus("Yazılıyor…", false);
+    clearTimeout(agendaSaveTimer);
+    agendaSaveTimer = setTimeout(saveAgenda, 700);
+  });
+  agendaText.addEventListener("blur", () => {
+    clearTimeout(agendaSaveTimer);
+    saveAgenda();
+  });
+
+  agendaPrev.addEventListener("click", () => {
+    clearTimeout(agendaSaveTimer);
+    saveAgenda();
+    loadAgenda(shiftDate(agendaDate, -1));
+  });
+  agendaNext.addEventListener("click", () => {
+    if (agendaDate === todayStr()) return;
+    clearTimeout(agendaSaveTimer);
+    saveAgenda();
+    loadAgenda(shiftDate(agendaDate, 1));
+  });
+  agendaToday.addEventListener("click", () => {
+    clearTimeout(agendaSaveTimer);
+    saveAgenda();
+    loadAgenda(todayStr());
+  });
 
   function translateError(msg) {
     const m = (msg || "").toLowerCase();

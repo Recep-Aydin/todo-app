@@ -15,6 +15,7 @@ HTML, CSS ve Vanilla JavaScript ile yapılmış, **Supabase** (PostgreSQL) verit
 - 🌗 Açık / koyu tema (tercih kaydedilir)
 - 🛠️ **Mühendis Köşesi** yan paneli: günün mühendislik terimi + tıklayınca eklenen hazır mini görevler
 - 🔬 **Bilim Dünyası** köşesi: Spaceflight News API'den güncel uzay & bilim haberleri (canlı)
+- 📓 **Günlük Ajanda** (sol panel): her güne özel not/ajanda, otomatik kayıt, ◀ ▶ ile geçmiş günleri gez
 - ➕ Görev ekleme
 - ✅ Tamamlandı / aktif işaretleme
 - 🗑️ Silme ve tamamlananları temizleme

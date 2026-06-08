@@ -571,13 +571,18 @@ body {
   align-items: flex-start;
   gap: 20px;
   width: 100%;
-  max-width: 860px;
+  max-width: 1180px;
   justify-content: center;
 }
 
 .layout .app {
-  flex: 1 1 520px;
+  flex: 0 1 520px;
   max-width: 520px;
+}
+
+.panel--left {
+  flex: 0 0 280px;
+  width: 280px;
 }
 
 .panel {
@@ -703,18 +708,114 @@ body {
   color: var(--success);
 }
 
-@media (max-width: 860px) {
+/* Geniş: sol panel | app | sağ panel yan yana. Dar: app üstte, paneller altta. */
+@media (max-width: 1180px) {
+  .layout {
+    flex-wrap: wrap;
+    max-width: 840px;
+  }
+  .layout .app { order: -1; flex: 1 1 100%; max-width: 520px; margin: 0 auto; }
+  .panel--left { flex: 1 1 280px; }
+  .panel { flex: 1 1 280px; }
+}
+
+@media (max-width: 620px) {
   .layout {
     flex-direction: column;
     align-items: center;
     max-width: 520px;
   }
   .layout .app,
-  .panel {
+  .panel,
+  .panel--left {
     width: 100%;
     flex: 1 1 auto;
     max-width: 520px;
   }
+}
+
+/* ===== GÜNLÜK AJANDA (SOL PANEL) ===== */
+.agenda__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.agenda__nav .icon-btn {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.agenda__date {
+  text-align: center;
+  line-height: 1.2;
+  flex: 1;
+}
+
+.agenda__day {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.agenda__badge {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: var(--primary);
+  padding: 1px 8px;
+  border-radius: 99px;
+}
+
+.agenda__text {
+  width: 100%;
+  min-height: 280px;
+  resize: vertical;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: inherit;
+  padding: 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.agenda__text::placeholder {
+  color: var(--text-muted);
+}
+
+.agenda__text:focus {
+  border-color: var(--primary);
+}
+
+.agenda__text:disabled {
+  opacity: 0.7;
+}
+
+.agenda__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  min-height: 22px;
+}
+
+.agenda__status {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.agenda__status.is-saved {
+  color: var(--success);
 }
 
 /* ===== BİLİM DÜNYASI HABERLERİ ===== */

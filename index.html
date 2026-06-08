@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yapılacaklar Listesi</title>
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
   <!-- Konfeti katmanı -->
@@ -59,8 +59,31 @@
     </div>
   </div>
 
-  <!-- UYGULAMA + YAN PANEL -->
+  <!-- UYGULAMA + YAN PANELLER -->
   <div class="layout" id="appScreen" hidden>
+    <!-- Sol panel: Günlük Ajanda -->
+    <aside class="panel panel--left">
+      <h2 class="panel__brand">📓 Günlük Ajanda</h2>
+
+      <div class="agenda__nav">
+        <button class="icon-btn" id="agendaPrev" title="Önceki gün" aria-label="Önceki gün">‹</button>
+        <div class="agenda__date">
+          <span class="agenda__day" id="agendaDay">—</span>
+          <span class="agenda__badge" id="agendaBadge" hidden>Bugün</span>
+        </div>
+        <button class="icon-btn" id="agendaNext" title="Sonraki gün" aria-label="Sonraki gün">›</button>
+      </div>
+
+      <textarea id="agendaText" class="agenda__text"
+                placeholder="Bugün için planın, hedeflerin, notların...&#10;&#10;• ..."
+                maxlength="2000"></textarea>
+
+      <div class="agenda__foot">
+        <span class="agenda__status" id="agendaStatus"></span>
+        <button class="icon-btn" id="agendaToday" title="Bugüne dön" aria-label="Bugüne dön">📅</button>
+      </div>
+    </aside>
+
     <!-- Ana todo kartı -->
     <div class="app">
       <header class="app__header">
@@ -157,6 +180,6 @@
     </aside>
   </div>
 
-  <script src="app.js?v=8"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>
