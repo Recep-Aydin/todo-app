@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yapılacaklar Listesi</title>
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
   <!-- GİRİŞ / KAYIT EKRANI -->
@@ -41,8 +41,11 @@
           <p class="app__date" id="date"></p>
         </div>
         <div class="app__user">
+          <div class="app__user-top">
+            <button class="icon-btn" id="themeToggle" title="Tema değiştir" aria-label="Tema değiştir">🌙</button>
+            <button class="link-btn" id="logoutBtn">Çıkış</button>
+          </div>
           <span class="app__email" id="userEmail"></span>
-          <button class="link-btn" id="logoutBtn">Çıkış</button>
         </div>
       </div>
     </header>
@@ -50,8 +53,14 @@
     <form class="todo-form" id="todoForm">
       <input type="text" id="todoInput" class="todo-form__input"
              placeholder="Yeni bir görev ekle..." autocomplete="off" maxlength="200">
+      <input type="date" id="todoDue" class="todo-form__date" title="Son tarih (isteğe bağlı)">
       <button type="submit" class="todo-form__btn" aria-label="Ekle">+</button>
     </form>
+
+    <div class="toolbar">
+      <input type="search" id="searchInput" class="toolbar__search"
+             placeholder="🔍 Görevlerde ara..." autocomplete="off">
+    </div>
 
     <div class="filters" id="filters">
       <button class="filters__btn is-active" data-filter="all">Tümü</button>
@@ -71,6 +80,6 @@
     </footer>
   </div>
 
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

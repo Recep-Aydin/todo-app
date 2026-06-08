@@ -12,6 +12,7 @@
 
 :root {
   --bg: #0f172a;
+  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
   --surface: #1e293b;
   --surface-2: #334155;
   --primary: #6366f1;
@@ -20,17 +21,32 @@
   --text-muted: #94a3b8;
   --danger: #ef4444;
   --success: #22c55e;
+  --shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
   --radius: 12px;
+}
+
+/* Açık tema */
+:root[data-theme="light"] {
+  --bg: #f1f5f9;
+  --bg-gradient: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --shadow: 0 20px 50px rgba(99, 102, 241, 0.15);
 }
 
 body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  background: var(--bg-gradient);
   color: var(--text);
   min-height: 100vh;
   display: flex;
   justify-content: center;
   padding: 40px 16px;
+  transition: background 0.3s, color 0.3s;
 }
 
 .app {
@@ -39,7 +55,7 @@ body {
   background: var(--surface);
   border-radius: 16px;
   padding: 28px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow);
   height: fit-content;
 }
 
@@ -72,7 +88,7 @@ body {
   background: var(--surface);
   border-radius: 16px;
   padding: 36px 28px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow);
 }
 
 .auth__title {
@@ -376,4 +392,147 @@ body {
 
 .link-btn:hover {
   color: var(--danger);
+}
+
+/* ===== GELİŞTİRMELER ===== */
+
+/* Header üst sıra (tema + çıkış) */
+.app__user-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.icon-btn {
+  border: none;
+  background: var(--surface-2);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.icon-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Form: son tarih girişi */
+.todo-form__date {
+  width: 44px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 0 6px;
+  cursor: pointer;
+  transition: width 0.2s, color 0.2s;
+}
+
+.todo-form__date:focus,
+.todo-form__date:valid {
+  width: 140px;
+  color: var(--text);
+  outline: none;
+}
+
+.todo-form__date::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
+  cursor: pointer;
+}
+
+:root[data-theme="light"] .todo-form__date::-webkit-calendar-picker-indicator {
+  filter: none;
+}
+
+/* Araç çubuğu / arama */
+.toolbar {
+  margin-bottom: 14px;
+}
+
+.toolbar__search {
+  width: 100%;
+  padding: 11px 14px;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.toolbar__search::placeholder {
+  color: var(--text-muted);
+}
+
+.toolbar__search:focus {
+  border-color: var(--primary);
+}
+
+/* Görev içerik kolonu */
+.todo-item__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.todo-item__due {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.todo-item__due.is-overdue {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.todo-item.is-completed .todo-item__due {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* Satır içi düzenleme alanı */
+.todo-item__edit {
+  flex: 1;
+  padding: 6px 10px;
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+}
+
+/* Düzenle butonu */
+.todo-item__edit-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.todo-item__edit-btn:hover {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary);
+}
+
+@media (max-width: 480px) {
+  .app { padding: 22px 18px; }
 }

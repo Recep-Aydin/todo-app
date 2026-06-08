@@ -5,6 +5,10 @@ HTML, CSS ve Vanilla JavaScript ile yapılmış, **Supabase** (PostgreSQL) verit
 ## Özellikler
 - 🔐 E-posta + şifre ile kayıt ve giriş (e-posta onayı gerekmez)
 - 👤 Her kullanıcı yalnızca kendi görevlerini görür (RLS ile)
+- ✏️ Görev düzenleme (metne çift tıkla veya kalem ikonu)
+- 📅 Son tarih (deadline) — geçmiş tarihler kırmızı uyarı
+- 🔍 Görevlerde anlık arama
+- 🌗 Açık / koyu tema (tercih kaydedilir)
 - ➕ Görev ekleme
 - ✅ Tamamlandı / aktif işaretleme
 - 🗑️ Silme ve tamamlananları temizleme

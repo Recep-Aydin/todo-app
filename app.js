@@ -33,12 +33,17 @@
   const counter = document.getElementById("counter");
   const clearCompletedBtn = document.getElementById("clearCompleted");
   const dateEl = document.getElementById("date");
+  const dueInput = document.getElementById("todoDue");
+  const searchInput = document.getElementById("searchInput");
+  const themeToggle = document.getElementById("themeToggle");
 
   // --- State ---
   let session = loadSession(); // { access_token, refresh_token, user }
   let todos = [];
   let filter = "all";
   let mode = "login"; // login | signup
+  let search = "";
+  let editingId = null;
 
   // =========================================================
   //  OTURUM (SESSION) YÖNETİMİ
@@ -158,14 +163,37 @@
     render();
   }
 
-  async function addTodo(text) {
+  async function addTodo(text, dueDate) {
+    const payload = { text }; // user_id DB'de auth.uid() ile otomatik
+    if (dueDate) payload.due_date = dueDate;
     const [created] = await api("", {
       method: "POST",
       headers: { Prefer: "return=representation" },
-      body: JSON.stringify({ text }), // user_id DB'de auth.uid() ile otomatik
+      body: JSON.stringify(payload),
     });
     todos.unshift(created);
     render();
+  }
+
+  async function editTodo(id, newText) {
+    const todo = todos.find((t) => t.id === id);
+    if (!todo) return;
+    const trimmed = newText.trim();
+    if (!trimmed || trimmed === todo.text) return; // değişiklik yok
+    const prev = todo.text;
+    todo.text = trimmed; // iyimser
+    render();
+    try {
+      await api(`?id=eq.${id}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({ text: trimmed }),
+      });
+    } catch (err) {
+      todo.text = prev;
+      render();
+      alert(err.message);
+    }
   }
 
   async function toggleTodo(id) {
@@ -215,9 +243,29 @@
   //  RENDER
   // =========================================================
   function getVisible() {
-    if (filter === "active") return todos.filter((t) => !t.completed);
-    if (filter === "completed") return todos.filter((t) => t.completed);
-    return todos;
+    let result = todos;
+    if (filter === "active") result = result.filter((t) => !t.completed);
+    else if (filter === "completed") result = result.filter((t) => t.completed);
+    if (search) {
+      const q = search.toLocaleLowerCase("tr");
+      result = result.filter((t) => t.text.toLocaleLowerCase("tr").includes(q));
+    }
+    return result;
+  }
+
+  // Son tarihi okunabilir biçime çevir + gecikme durumu
+  function formatDue(dateStr) {
+    const due = new Date(dateStr + "T00:00:00");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffDays = Math.round((due - today) / 86400000);
+    let label;
+    if (diffDays === 0) label = "Bugün";
+    else if (diffDays === 1) label = "Yarın";
+    else if (diffDays === -1) label = "Dün";
+    else
+      label = due.toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
+    return { label, overdue: diffDays < 0 };
   }
 
   function render() {
@@ -235,10 +283,68 @@
       checkbox.checked = todo.completed;
       checkbox.addEventListener("change", () => toggleTodo(todo.id));
 
+      // İçerik kolonu (metin + son tarih)
+      const content = document.createElement("div");
+      content.className = "todo-item__content";
+
+      if (editingId === todo.id) {
+        // Düzenleme modu: input göster
+        const edit = document.createElement("input");
+        edit.className = "todo-item__edit";
+        edit.value = todo.text;
+        edit.maxLength = 200;
+        const commit = () => {
+          if (editingId !== todo.id) return; // çift tetiklenmeyi engelle (Enter + blur)
+          const val = edit.value;
+          editingId = null;
+          editTodo(todo.id, val); // kendi render'ını yapar (değişiklik/hata durumunda)
+          render(); // düzenleme modundan çık
+        };
+        edit.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") commit();
+          else if (e.key === "Escape") {
+            editingId = null;
+            render();
+          }
+        });
+        edit.addEventListener("blur", commit);
+        content.appendChild(edit);
+        li.append(checkbox, content);
+        list.appendChild(li);
+        setTimeout(() => {
+          edit.focus();
+          edit.select();
+        }, 0);
+        return;
+      }
+
       const span = document.createElement("span");
       span.className = "todo-item__text";
       span.textContent = todo.text;
+      span.title = "Tamamla (çift tıkla: düzenle)";
       span.addEventListener("click", () => toggleTodo(todo.id));
+      span.addEventListener("dblclick", () => {
+        editingId = todo.id;
+        render();
+      });
+      content.appendChild(span);
+
+      if (todo.due_date) {
+        const { label, overdue } = formatDue(todo.due_date);
+        const due = document.createElement("span");
+        due.className = "todo-item__due" + (overdue && !todo.completed ? " is-overdue" : "");
+        due.textContent = "📅 " + label;
+        content.appendChild(due);
+      }
+
+      const editBtn = document.createElement("button");
+      editBtn.className = "todo-item__edit-btn";
+      editBtn.innerHTML = "✏️";
+      editBtn.title = "Düzenle";
+      editBtn.addEventListener("click", () => {
+        editingId = todo.id;
+        render();
+      });
 
       const del = document.createElement("button");
       del.className = "todo-item__delete";
@@ -246,12 +352,20 @@
       del.setAttribute("aria-label", "Sil");
       del.addEventListener("click", () => deleteTodo(todo.id));
 
-      li.append(checkbox, span, del);
+      li.append(checkbox, content, editBtn, del);
       list.appendChild(li);
     });
 
     const hasTodos = todos.length > 0;
-    empty.hidden = visible.length > 0;
+    if (todos.length > 0 && visible.length === 0) {
+      empty.hidden = false;
+      empty.querySelector("p").textContent = search
+        ? "Eşleşen görev yok 🔍"
+        : "Bu görünümde görev yok";
+    } else {
+      empty.hidden = visible.length > 0;
+      empty.querySelector("p").textContent = "Henüz görev yok 🎉";
+    }
     footer.hidden = !hasTodos;
 
     const remaining = todos.filter((t) => !t.completed).length;
@@ -337,10 +451,12 @@
     e.preventDefault();
     const text = input.value.trim();
     if (!text) return;
+    const due = dueInput.value || null;
     input.value = "";
+    dueInput.value = "";
     input.focus();
     try {
-      await addTodo(text);
+      await addTodo(text, due);
     } catch (err) {
       alert(err.message);
     }
@@ -356,7 +472,32 @@
     render();
   });
 
+  searchInput.addEventListener("input", () => {
+    search = searchInput.value.trim();
+    render();
+  });
+
   clearCompletedBtn.addEventListener("click", clearCompleted);
+
+  // --- Tema ---
+  function applyTheme(theme) {
+    if (theme === "light") {
+      document.documentElement.setAttribute("data-theme", "light");
+      themeToggle.textContent = "☀️";
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+      themeToggle.textContent = "🌙";
+    }
+  }
+
+  themeToggle.addEventListener("click", () => {
+    const next =
+      document.documentElement.getAttribute("data-theme") === "light"
+        ? "dark"
+        : "light";
+    localStorage.setItem("theme", next);
+    applyTheme(next);
+  });
 
   function translateError(msg) {
     const m = (msg || "").toLowerCase();
@@ -372,6 +513,7 @@
   // =========================================================
   //  BAŞLANGIÇ
   // =========================================================
+  applyTheme(localStorage.getItem("theme") || "dark");
   setMode("login");
   if (session?.access_token) {
     showApp();
