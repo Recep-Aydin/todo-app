@@ -14,6 +14,7 @@ HTML, CSS ve Vanilla JavaScript ile yapılmış, **Supabase** (PostgreSQL) verit
 - 🔍 Görevlerde anlık arama
 - 🌗 Açık / koyu tema (tercih kaydedilir)
 - 🛠️ **Mühendis Köşesi** yan paneli: günün mühendislik terimi + tıklayınca eklenen hazır mini görevler
+- 🔬 **Bilim Dünyası** köşesi: Spaceflight News API'den güncel uzay & bilim haberleri (canlı)
 - ➕ Görev ekleme
 - ✅ Tamamlandı / aktif işaretleme
 - 🗑️ Silme ve tamamlananları temizleme

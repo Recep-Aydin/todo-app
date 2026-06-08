@@ -40,6 +40,8 @@
   const termDefEl = document.getElementById("termDef");
   const suggestionsEl = document.getElementById("suggestions");
   const suggestRefresh = document.getElementById("suggestRefresh");
+  const newsListEl = document.getElementById("newsList");
+  const newsRefresh = document.getElementById("newsRefresh");
   const priorityInput = document.getElementById("todoPriority");
   const progressEl = document.getElementById("progress");
   const progressBar = document.getElementById("progressBar");
@@ -779,12 +781,81 @@
   function renderPanel() {
     renderTerm();
     renderSuggestions();
+    fetchScienceNews();
   }
 
   suggestRefresh.addEventListener("click", () => {
     suggestSeed = (suggestSeed + 4) % MINI_TASKS.length; // sonraki grup
     renderSuggestions();
   });
+
+  // ----- Bilim Dünyası: güncel uzay & bilim haberleri -----
+  const NEWS_API =
+    "https://api.spaceflightnewsapi.net/v4/articles/?limit=5&ordering=-published_at";
+
+  function timeAgo(iso) {
+    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (diff < 3600) return Math.max(1, Math.round(diff / 60)) + " dk önce";
+    if (diff < 86400) return Math.round(diff / 3600) + " saat önce";
+    return Math.round(diff / 86400) + " gün önce";
+  }
+
+  function setNewsState(msg, withRetry) {
+    newsListEl.innerHTML = "";
+    const li = document.createElement("li");
+    li.className = "news__state";
+    li.textContent = msg + " ";
+    if (withRetry) {
+      const btn = document.createElement("button");
+      btn.className = "news__retry";
+      btn.textContent = "Tekrar dene";
+      btn.addEventListener("click", fetchScienceNews);
+      li.appendChild(btn);
+    }
+    newsListEl.appendChild(li);
+  }
+
+  let newsLoading = false;
+  async function fetchScienceNews() {
+    if (newsLoading) return;
+    newsLoading = true;
+    setNewsState("Yükleniyor…", false);
+    try {
+      const res = await fetch(NEWS_API, { cache: "no-store" });
+      if (!res.ok) throw new Error("http " + res.status);
+      const data = await res.json();
+      const items = (data.results || []).slice(0, 5);
+      if (items.length === 0) {
+        setNewsState("Şu an haber bulunamadı.", true);
+        return;
+      }
+      newsListEl.innerHTML = "";
+      items.forEach((a) => {
+        const li = document.createElement("li");
+        li.className = "news__item";
+
+        const link = document.createElement("a");
+        link.className = "news__link";
+        link.href = a.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = a.title;
+
+        const meta = document.createElement("div");
+        meta.className = "news__meta";
+        meta.textContent = `${a.news_site || "Kaynak"} · ${timeAgo(a.published_at)}`;
+
+        li.append(link, meta);
+        newsListEl.appendChild(li);
+      });
+    } catch (err) {
+      setNewsState("Haberler yüklenemedi.", true);
+    } finally {
+      newsLoading = false;
+    }
+  }
+
+  newsRefresh.addEventListener("click", fetchScienceNews);
 
   function translateError(msg) {
     const m = (msg || "").toLowerCase();

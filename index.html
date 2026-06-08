@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yapılacaklar Listesi</title>
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
   <!-- Konfeti katmanı -->
@@ -145,9 +145,18 @@
         <ul class="suggestions" id="suggestions"></ul>
         <p class="panel__hint">Eklemek için bir öneriye tıkla ➕</p>
       </section>
+
+      <section class="panel__section">
+        <div class="panel__head">
+          <h3 class="panel__title">🔬 Bilim Dünyası</h3>
+          <button class="icon-btn" id="newsRefresh" title="Haberleri yenile" aria-label="Yenile">🔄</button>
+        </div>
+        <ul class="news" id="newsList"></ul>
+        <p class="panel__hint">Uzay &amp; bilimden son gelişmeler · Spaceflight News API</p>
+      </section>
     </aside>
   </div>
 
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>
