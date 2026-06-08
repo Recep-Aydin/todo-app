@@ -4,16 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yapılacaklar Listesi</title>
-  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
   <!-- Konfeti katmanı -->
   <div class="confetti" id="confetti" aria-hidden="true"></div>
-  <!-- ARKA PLAN: resmî / teknik blueprint estetiği -->
+  <!-- ARKA PLAN: rahatlatıcı doğa renk paletleri, sırayla yumuşak geçişli -->
+  <div class="bg-scene" aria-hidden="true">
+    <div class="bg-layer" id="bgLayerA"></div>
+    <div class="bg-layer" id="bgLayerB"></div>
+    <div class="bg-scrim"></div>
+  </div>
   <div class="bg-decor" aria-hidden="true">
-    <span class="bg-ring bg-ring--1"></span>
-    <span class="bg-ring bg-ring--2"></span>
-    <span class="bg-ring bg-ring--3"></span>
+    <span class="bg-name" id="bgName"></span>
 
     <!-- Teknofest temalı, mühür tarzı ağırbaşlı arma (orijinal logo değil, homage) -->
     <div class="bg-emblem" title="Geleceği yazanlar">
@@ -171,6 +174,6 @@
     </aside>
   </div>
 
-  <script src="app.js?v=11"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>

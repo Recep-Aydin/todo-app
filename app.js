@@ -1107,8 +1107,56 @@
   }
 
   // =========================================================
+  //  ARKA PLAN: rahatlatıcı doğa renk paletleri (sırayla geçiş)
+  // =========================================================
+  const BG_PALETTES = [
+    { name: "🌅 Şafak", g: "linear-gradient(135deg, #ffd1a9 0%, #ff9a8b 45%, #c98a9b 100%)" },
+    { name: "🌊 Okyanus", g: "linear-gradient(135deg, #1a759f 0%, #468faf 45%, #89c2d9 100%)" },
+    { name: "🌲 Orman", g: "linear-gradient(135deg, #1b4332 0%, #40916c 50%, #95d5b2 100%)" },
+    { name: "🌆 Alacakaranlık", g: "linear-gradient(135deg, #4a4e69 0%, #9a8c98 50%, #c9ada7 100%)" },
+    { name: "🌌 Kutup Işıkları", g: "linear-gradient(135deg, #14213d 0%, #2a9d8f 50%, #6a4c93 100%)" },
+    { name: "🏜️ Çöl", g: "linear-gradient(135deg, #e9c46a 0%, #f4a261 50%, #e76f51 100%)" },
+    { name: "🌫️ Sisli Sabah", g: "linear-gradient(135deg, #8aa0a8 0%, #b3c5be 50%, #dfe7e2 100%)" },
+    { name: "🌸 Pembe Tan", g: "linear-gradient(135deg, #cdb4db 0%, #ffc8dd 50%, #ffafcc 100%)" },
+  ];
+
+  const bgLayerA = document.getElementById("bgLayerA");
+  const bgLayerB = document.getElementById("bgLayerB");
+  const bgName = document.getElementById("bgName");
+  let bgActive = bgLayerA;
+  let bgHidden = bgLayerB;
+  let bgIdx = 0;
+
+  function showPalette(i) {
+    const p = BG_PALETTES[i];
+    bgHidden.style.backgroundImage = p.g;
+    bgHidden.classList.add("is-active");
+    bgActive.classList.remove("is-active");
+    const tmp = bgActive;
+    bgActive = bgHidden;
+    bgHidden = tmp;
+    if (bgName) bgName.textContent = p.name;
+  }
+
+  function startBackgroundCycle() {
+    // İlk paleti hemen göster
+    bgLayerA.style.backgroundImage = BG_PALETTES[0].g;
+    bgLayerA.classList.add("is-active");
+    bgActive = bgLayerA;
+    bgHidden = bgLayerB;
+    if (bgName) bgName.textContent = BG_PALETTES[0].name;
+
+    // Paletler arası yumuşak opaklık geçişi (hareket/kaydırma yok)
+    setInterval(() => {
+      bgIdx = (bgIdx + 1) % BG_PALETTES.length;
+      showPalette(bgIdx);
+    }, 9000);
+  }
+
+  // =========================================================
   //  BAŞLANGIÇ
   // =========================================================
+  startBackgroundCycle();
   applyTheme(localStorage.getItem("theme") || "dark");
   setMode("login");
   if (session?.access_token) {

@@ -1028,47 +1028,71 @@ body {
   z-index: 0;
 }
 
-/* İnce teknik ızgara (blueprint / kareli kâğıt) */
-.bg-decor::before {
-  content: "";
+/* Doğa renk paletleri sahnesi: iki katman çapraz geçiş yapar */
+.bg-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bg-layer {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-  background-size: 44px 44px;
-  -webkit-mask-image: radial-gradient(ellipse at 50% 38%, #000 55%, transparent 100%);
-  mask-image: radial-gradient(ellipse at 50% 38%, #000 55%, transparent 100%);
+  opacity: 0;
+  background-size: cover;
+  background-position: center;
+  transition: opacity 3s ease-in-out;
 }
 
-/* Zarif teknik halkalar (sabit, ağırbaşlı) */
-.bg-ring {
+.bg-layer.is-active {
+  opacity: 1;
+}
+
+/* İçeriğin okunabilirliği için yumuşak karartma */
+.bg-scrim {
   position: absolute;
-  border-radius: 50%;
-  border: 1px solid var(--ring-line);
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(15, 23, 42, 0.18) 0%,
+    rgba(15, 23, 42, 0.42) 100%
+  );
 }
 
-.bg-ring--1 {
-  width: 560px;
-  height: 560px;
-  top: -180px;
-  left: -180px;
+:root[data-theme="light"] .bg-scrim {
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(255, 255, 255, 0.32) 0%,
+    rgba(255, 255, 255, 0.55) 100%
+  );
 }
 
-.bg-ring--2 {
-  width: 380px;
-  height: 380px;
-  bottom: -130px;
-  right: -110px;
-  border-style: dashed;
+/* Aktif paletin adı (köşede ince etiket) */
+.bg-name {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 0;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(4px);
+  padding: 5px 12px;
+  border-radius: 99px;
+  opacity: 0;
+  animation: bgNameFade 9s ease-in-out infinite;
 }
 
-.bg-ring--3 {
-  width: 240px;
-  height: 240px;
-  top: 26%;
-  right: 7%;
-  opacity: 0.7;
+@keyframes bgNameFade {
+  0% { opacity: 0; transform: translateY(6px); }
+  12%, 80% { opacity: 0.85; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .bg-name { display: none; }
 }
 
 /* Teknofest temalı, mühür tarzı ağırbaşlı arma */
