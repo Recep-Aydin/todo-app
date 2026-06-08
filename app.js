@@ -40,6 +40,11 @@
   const termDefEl = document.getElementById("termDef");
   const suggestionsEl = document.getElementById("suggestions");
   const suggestRefresh = document.getElementById("suggestRefresh");
+  const priorityInput = document.getElementById("todoPriority");
+  const progressEl = document.getElementById("progress");
+  const progressBar = document.getElementById("progressBar");
+  const progressPct = document.getElementById("progressPct");
+  const confettiEl = document.getElementById("confetti");
 
   // --- State ---
   let session = loadSession(); // { access_token, refresh_token, user }
@@ -169,9 +174,10 @@
     render();
   }
 
-  async function addTodo(text, dueDate) {
+  async function addTodo(text, dueDate, priority) {
     const payload = { text }; // user_id DB'de auth.uid() ile otomatik
     if (dueDate) payload.due_date = dueDate;
+    payload.priority = priority || "medium";
     // Yeni görev en üste: mevcut en küçük pozisyonun bir altı
     const minPos = todos.length
       ? Math.min(...todos.map((t) => t.position ?? 0))
@@ -184,6 +190,29 @@
     });
     todos.unshift(created);
     render();
+  }
+
+  // Öncelik noktasına tıklayınca döngü: yüksek → orta → düşük → yüksek
+  async function cyclePriority(id) {
+    const todo = todos.find((t) => t.id === id);
+    if (!todo) return;
+    const order = ["high", "medium", "low"];
+    const cur = order.indexOf(todo.priority || "medium");
+    const next = order[(cur + 1) % order.length];
+    const prev = todo.priority;
+    todo.priority = next; // iyimser
+    render();
+    try {
+      await api(`?id=eq.${id}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({ priority: next }),
+      });
+    } catch (err) {
+      todo.priority = prev;
+      render();
+      alert(err.message);
+    }
   }
 
   // Sürükle-bırak ile yeni sıraya göre pozisyonu kalıcılaştır
@@ -250,6 +279,7 @@
     const next = !todo.completed;
     todo.completed = next;
     render();
+    if (next) fireConfetti(); // tamamlandığında 🎉
     try {
       await api(`?id=eq.${id}`, {
         method: "PATCH",
@@ -323,8 +353,10 @@
     list.innerHTML = "";
 
     visible.forEach((todo) => {
+      const prio = todo.priority || "medium";
       const li = document.createElement("li");
-      li.className = "todo-item" + (todo.completed ? " is-completed" : "");
+      li.className =
+        "todo-item prio-" + prio + (todo.completed ? " is-completed" : "");
       li.dataset.id = todo.id;
 
       const checkbox = document.createElement("input");
@@ -332,6 +364,13 @@
       checkbox.className = "todo-item__checkbox";
       checkbox.checked = todo.completed;
       checkbox.addEventListener("change", () => toggleTodo(todo.id));
+
+      // Tıklanabilir öncelik noktası (döngü)
+      const prioDot = document.createElement("button");
+      prioDot.className = "todo-item__prio prio-" + prio;
+      const prioLabel = { high: "Yüksek", medium: "Orta", low: "Düşük" }[prio];
+      prioDot.title = "Öncelik: " + prioLabel + " (değiştirmek için tıkla)";
+      prioDot.addEventListener("click", () => cyclePriority(todo.id));
 
       // İçerik kolonu (metin + son tarih)
       const content = document.createElement("div");
@@ -450,9 +489,11 @@
         handle.style.cursor = "not-allowed";
       }
 
-      li.append(handle, checkbox, content, editBtn, del);
+      li.append(handle, prioDot, checkbox, content, editBtn, del);
       list.appendChild(li);
     });
+
+    renderProgress();
 
     const hasTodos = todos.length > 0;
     if (todos.length > 0 && visible.length === 0) {
@@ -469,6 +510,39 @@
     const remaining = todos.filter((t) => !t.completed).length;
     counter.textContent =
       remaining === 1 ? "1 görev kaldı" : `${remaining} görev kaldı`;
+  }
+
+  // İlerleme çubuğu: tamamlanan / toplam
+  function renderProgress() {
+    const total = todos.length;
+    if (total === 0) {
+      progressEl.hidden = true;
+      return;
+    }
+    const done = todos.filter((t) => t.completed).length;
+    const pct = Math.round((done / total) * 100);
+    progressEl.hidden = false;
+    progressBar.style.width = pct + "%";
+    progressPct.textContent = "%" + pct;
+    progressBar.classList.toggle("is-complete", pct === 100);
+  }
+
+  // Konfeti patlaması (tamamlandığında)
+  function fireConfetti() {
+    const colors = ["#6366f1", "#22d3ee", "#f59e0b", "#ef4444", "#22c55e", "#facc15"];
+    const n = 80;
+    for (let i = 0; i < n; i++) {
+      const p = document.createElement("div");
+      p.className = "confetti__piece";
+      p.style.left = Math.random() * 100 + "vw";
+      p.style.background = colors[i % colors.length];
+      p.style.setProperty("--dx", Math.random() * 200 - 100 + "px");
+      p.style.setProperty("--dur", 1.2 + Math.random() * 1.2 + "s");
+      p.style.animationDelay = Math.random() * 0.2 + "s";
+      if (Math.random() < 0.5) p.style.borderRadius = "50%";
+      confettiEl.appendChild(p);
+      setTimeout(() => p.remove(), 2800);
+    }
   }
 
   // =========================================================
@@ -551,11 +625,13 @@
     const text = input.value.trim();
     if (!text) return;
     const due = dueInput.value || null;
+    const priority = priorityInput.value || "medium";
     input.value = "";
     dueInput.value = "";
+    priorityInput.value = "medium";
     input.focus();
     try {
-      await addTodo(text, due);
+      await addTodo(text, due, priority);
     } catch (err) {
       alert(err.message);
     }

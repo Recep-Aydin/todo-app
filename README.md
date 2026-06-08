@@ -5,6 +5,9 @@ HTML, CSS ve Vanilla JavaScript ile yapılmış, **Supabase** (PostgreSQL) verit
 ## Özellikler
 - 🔐 E-posta + şifre ile kayıt ve giriş (e-posta onayı gerekmez)
 - 👤 Her kullanıcı yalnızca kendi görevlerini görür (RLS ile)
+- 🚦 Öncelik etiketleri (Yüksek/Orta/Düşük — kırmızı/sarı/yeşil, noktaya tıkla değiştir)
+- 📊 Günlük ilerleme çubuğu (tamamlanan % — %100'de yeşil)
+- 🎉 Görev tamamlanınca konfeti animasyonu
 - ✏️ Görev düzenleme (metne çift tıkla veya kalem ikonu)
 - 📅 Son tarih (deadline) — geçmiş tarihler kırmızı uyarı
 - ↕️ Sürükle-bırak ile öncelik sıralaması (sıra kalıcı kaydedilir)
