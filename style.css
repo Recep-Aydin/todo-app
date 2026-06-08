@@ -907,6 +907,40 @@ body {
 .todo-item__prio.prio-medium { background: #f59e0b; }
 .todo-item__prio.prio-low { background: var(--success); }
 
+/* ===== TEKRARLAMA ===== */
+.todo-item__repeat {
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  filter: grayscale(1) opacity(0.45);
+  transition: filter 0.2s, background 0.2s;
+}
+
+.todo-item__repeat:hover {
+  background: rgba(99, 102, 241, 0.15);
+  filter: grayscale(0.3) opacity(0.9);
+}
+
+.todo-item__repeat.is-active {
+  filter: none;
+}
+
+.todo-item__recur {
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.todo-item.is-completed .todo-item__recur {
+  color: var(--text-muted);
+}
+
 /* ===== İLERLEME ÇUBUĞU ===== */
 .progress {
   margin-bottom: 16px;

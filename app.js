@@ -286,6 +286,30 @@
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
     const next = !todo.completed;
+    const recurring = next && todo.recurrence && todo.recurrence !== "none";
+
+    if (recurring) {
+      // Tekrarlı görev: tamamlanınca bir sonraki uygun güne yeniden planla
+      const prevDue = todo.due_date;
+      const nd = nextOccurrence(todo.recurrence);
+      todo.due_date = nd;
+      todo.completed = false; // aktif kalır, ileri tarihe taşınır
+      render();
+      fireConfetti();
+      try {
+        await api(`?id=eq.${id}`, {
+          method: "PATCH",
+          headers: { Prefer: "return=minimal" },
+          body: JSON.stringify({ due_date: nd, completed: false }),
+        });
+      } catch (err) {
+        todo.due_date = prevDue;
+        render();
+        alert(err.message);
+      }
+      return;
+    }
+
     todo.completed = next;
     render();
     if (next) fireConfetti(); // tamamlandığında 🎉
@@ -297,6 +321,60 @@
       });
     } catch (err) {
       todo.completed = !next;
+      render();
+      alert(err.message);
+    }
+  }
+
+  // Tekrar türüne göre bir sonraki uygun günü hesapla (bugünden sonra)
+  function nextOccurrence(type) {
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    for (let i = 1; i <= 7; i++) {
+      const d = new Date(base);
+      d.setDate(base.getDate() + i);
+      const dow = d.getDay(); // 0=Paz, 6=Cmt
+      const ok =
+        type === "daily" ||
+        (type === "weekday" && dow >= 1 && dow <= 5) ||
+        (type === "weekend" && (dow === 0 || dow === 6));
+      if (ok)
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+    return null;
+  }
+
+  const RECUR_LABEL = {
+    none: "Yok",
+    daily: "Her gün",
+    weekday: "Hafta içi",
+    weekend: "Hafta sonu",
+  };
+
+  // 🔁 butonu: Yok → Her gün → Hafta içi → Hafta sonu → Yok
+  async function cycleRecurrence(id) {
+    const todo = todos.find((t) => t.id === id);
+    if (!todo) return;
+    const order = ["none", "daily", "weekday", "weekend"];
+    const cur = order.indexOf(todo.recurrence || "none");
+    const nextR = order[(cur + 1) % order.length];
+    const prev = todo.recurrence;
+    todo.recurrence = nextR;
+    // Tekrar açıldıysa ve tarihi yoksa, bir sonraki uygun güne ata
+    let dueChange = {};
+    if (nextR !== "none" && !todo.due_date) {
+      todo.due_date = nextOccurrence(nextR);
+      dueChange = { due_date: todo.due_date };
+    }
+    render();
+    try {
+      await api(`?id=eq.${id}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({ recurrence: nextR, ...dueChange }),
+      });
+    } catch (err) {
+      todo.recurrence = prev;
       render();
       alert(err.message);
     }
@@ -435,6 +513,22 @@
         content.appendChild(due);
       }
 
+      const recur = todo.recurrence || "none";
+      if (recur !== "none") {
+        const rb = document.createElement("span");
+        rb.className = "todo-item__recur";
+        rb.textContent = "🔁 " + RECUR_LABEL[recur];
+        content.appendChild(rb);
+      }
+
+      // 🔁 Tekrar butonu
+      const repeatBtn = document.createElement("button");
+      repeatBtn.className =
+        "todo-item__repeat" + (recur !== "none" ? " is-active" : "");
+      repeatBtn.innerHTML = "🔁";
+      repeatBtn.title = "Tekrar: " + RECUR_LABEL[recur] + " (değiştirmek için tıkla)";
+      repeatBtn.addEventListener("click", () => cycleRecurrence(todo.id));
+
       const editBtn = document.createElement("button");
       editBtn.className = "todo-item__edit-btn";
       editBtn.innerHTML = "✏️";
@@ -498,7 +592,7 @@
         handle.style.cursor = "not-allowed";
       }
 
-      li.append(handle, prioDot, checkbox, content, editBtn, del);
+      li.append(handle, prioDot, checkbox, content, repeatBtn, editBtn, del);
       list.appendChild(li);
     });
 

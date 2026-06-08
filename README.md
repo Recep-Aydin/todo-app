@@ -11,6 +11,7 @@ HTML, CSS ve Vanilla JavaScript ile yapılmış, **Supabase** (PostgreSQL) verit
 - ✏️ Görev düzenleme (metne çift tıkla veya kalem ikonu)
 - 📅 Son tarih (deadline) — geçmiş tarihler kırmızı uyarı
 - ↕️ Sürükle-bırak ile öncelik sıralaması (sıra kalıcı kaydedilir)
+- 🔁 Tekrarlayan görevler (Her gün / Hafta içi / Hafta sonu) — tamamlanınca sonraki güne otomatik planlanır
 - 🔍 Görevlerde anlık arama
 - 🌗 Açık / koyu tema (tercih kaydedilir)
 - 🛠️ **Mühendis Köşesi** yan paneli: günün mühendislik terimi + tıklayınca eklenen hazır mini görevler
